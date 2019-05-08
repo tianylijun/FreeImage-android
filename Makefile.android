@@ -1,0 +1,51 @@
+include Makefile.srcs
+
+TARGET = freeimages
+
+INSTALLDIR=./
+ANDROID_API=22
+
+SYSROOT=$(NDK_ROOT)/platforms/android-$(ANDROID_API)/arch-arm64/
+
+LDFLAGS = -L$(SYSROOT)/usr/lib/
+
+CC=$(NDK_ROOT)/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64/bin/aarch64-linux-android-gcc
+CXX=$(NDK_ROOT)/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64/bin/aarch64-linux-android-g++
+AR=$(NDK_ROOT)/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64/bin/aarch64-linux-android-ar
+
+SYSROOT_INCLUDE = -I$(NDK_ROOT)/sources/cxx-stl/gnu-libstdc++/4.9/include
+SYSROOT_INCLUDE += -I$(NDK_ROOT)/sources/cxx-stl/gnu-libstdc++/4.9/libs/arm64-v8a/include 
+SYSROOT_INCLUDE += -I$(NDK_ROOT)/sources/cxx-stl/gnu-libstdc++/4.9/include/backward 
+SYSROOT_INCLUDE += -I$(NDK_ROOT)/sysroot/usr/include/aarch64-linux-android 
+SYSROOT_INCLUDE += -I$(NDK_ROOT)/sysroot/usr/include
+
+MODULES = $(SRCS:.c=.o)
+MODULES := $(MODULES:.cpp=.o)
+
+CFLAGS  = --sysroot $(SYSROOT)
+CFLAGS += $(INCLUDE) 
+CFLAGS += $(SYSROOT_INCLUDE)
+CFLAGS += -D__ANDROID_API__=$(ANDROID_API) -DANDROID -D__ANSI__ -DDISABLE_PERF_MEASUREMENT
+CFLAGS += -march=armv8-a -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -Wa,--noexecstack -Wformat -Werror=format-security -fopenmp -fPIE -Wno-attributes -ffast-math -fno-strict-aliasing
+
+CXXFLAGS  = --sysroot $(SYSROOT)
+CXXFLAGS += $(INCLUDE)
+CXXFLAGS += $(SYSROOT_INCLUDE)
+CXXFLAGS += -D__ANDROID_API__=$(ANDROID_API) -DANDROID -D__ANSI__ -DDISABLE_PERF_MEASUREMENT
+CXXFLAGS += -march=armv8-a -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -Wa,--noexecstack -Wformat -Werror=format-security -fopenmp -fPIE -Wno-attributes -ffast-math -fno-strict-aliasing
+
+STATICLIB = lib$(TARGET).a
+SHAREDLIB = lib$(TARGET)-$(VER_MAJOR).$(VER_MINOR).so
+LIBNAME= lib$(TARGET).so
+VERLIBNAME = $(LIBNAME).$(VER_MAJOR)
+
+default:all
+
+%.o: %.c
+	$(CC) $(CFLAGS) -o $@ -c $<
+
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -o $@ -c $<
+
+all:$(MODULES)
+	$(AR) rcs $(STATICLIB) $(MODULES)
